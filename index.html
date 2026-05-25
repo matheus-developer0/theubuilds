@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>theu.builds — Digital Excellence</title>
+    
+    <!-- Google Fonts: Syne & Cormorant Garamond com otimização de renderização swap -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700;800&display=swap" as="style">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS para utilitários rápidos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            black: '#050505',
+                            blackPure: '#000000',
+                            white: '#FAFAFA',
+                            crimson: '#D91A2A',
+                            crimsonGlow: '#FF2A3B',
+                            darkGray: '#0D0D0D',
+                            midGray: '#121212',
+                            border: 'rgba(255, 255, 255, 0.04)',
+                            textMuted: '#999999'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Three.js para renderização WebGL acelerada por hardware -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+        :root {
+            --black: #050505;
+            --black-pure: #000000;
+            --white: #FAFAFA;
+            --crimson: #D91A2A;
+            --crimson-glow: #FF2A3B;
+            --gray: #0D0D0D;
+            --gray-mid: #121212;
+            --text-muted: #999999;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background: var(--black-pure);
+            color: var(--white);
+            font-family: 'Syne', sans-serif;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* CURSOR OPTIMIZED: Utiliza translate3d para renderização direta via GPU */
+        @media (pointer: fine) {
+            body {
+                cursor: none;
+            }
+            .cursor {
+                position: fixed;
+                width: 6px;
+                height: 6px;
+                background: var(--crimson-glow);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 10000;
+                top: 0;
+                left: 0;
+                will-change: transform;
+                transform: translate3d(-100px, -100px, 0);
+                mix-blend-mode: screen;
+            }
+            .cursor-ring {
+                position: fixed;
+                width: 38px;
+                height: 38px;
+                border: 1px solid rgba(217, 26, 42, 0.4);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                top: 0;
+                left: 0;
+                will-change: transform;
+                transform: translate3d(-100px, -100px, 0);
+                transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), height 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s, background-color 0.25s;
+                opacity: 0.8;
+            }
+            .interactive-hover:hover ~ .cursor-ring {
+                width: 58px;
+                height: 58px;
+                border-color: var(--crimson-glow);
+                background-color: rgba(217, 26, 42, 0.04);
+            }
+        }
+
+        /* Noise Overlay leve de alto desempenho */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.012'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 9998;
+        }
+
+        /* Content-visibility: pinta seções offscreen sob demanda */
+        section {
+            content-visibility: auto;
+            contain-intrinsic-size: auto 800px;
+        }
+
+        /* Glassmorphism e Glow layers */
+        .glass-panel {
+            background: rgba(13, 13, 13, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.4s, box-shadow 0.4s;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(217, 26, 42, 0.2);
+            background: rgba(18, 18, 18, 0.8);
+            box-shadow: 0 10px 30px -15px rgba(217, 26, 42, 0.15);
+        }
+
+        .ambient-glow {
+            background: radial-gradient(circle at 50% 50%, rgba(217, 26, 42, 0.05) 0%, transparent 70%);
+            filter: blur(50px);
+            pointer-events: none;
+        }
+
+        .serif-editorial {
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 300;
+        }
+
+        /* Grade estrutural leve */
+        .tech-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(217, 26, 42, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(217, 26, 42, 0.015) 1px, transparent 1px);
+            background-size: 80px 80px;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--black-pure);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #18181b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--crimson);
+        }
+
+        /* Auxiliar para esconder elementos antes do JS iniciar */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        .reveal.animating {
+            will-change: transform, opacity;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-ring" id="cursorRing"></div>
+
+    <!-- CANVAS 3D DA ESCULTURA DE LUXO (Desempenho Otimizado) -->
+    <div class="fixed inset-0 z-0 pointer-events-none opacity-80" id="canvas-container">
+        <canvas id="sculpture-3d" class="w-full h-full block"></canvas>
+    </div>
+
+    <!-- NAVIGATION BAR -->
+    <nav class="fixed top-0 left-0 right-0 z-50 px-6 py-5 md:px-12 flex justify-between items-center bg-brand-blackPure/30 backdrop-blur-md border-b border-white/5">
+        <a href="#" class="nav-logo text-lg font-bold tracking-widest text-brand-white flex items-center gap-3 interactive-hover">
+            <img src="logo.png" alt="TB Logo" class="w-8 h-8 object-contain">
+            <span class="flex items-center gap-0.5">
+                theu<span class="text-brand-crimson font-light italic text-xl serif-editorial">.builds</span>
+            </span>
+        </a>
+        <ul class="hidden md:flex items-center gap-10 text-[10px] font-medium tracking-widest uppercase text-brand-textMuted">
+            <li><a href="#sobre" class="hover:text-brand-white transition-colors duration-300 interactive-hover">Sobre</a></li>
+            <li><a href="#servicos" class="hover:text-brand-white transition-colors duration-300 interactive-hover">Serviços</a></li>
+            <li><a href="#planos" class="hover:text-brand-white transition-colors duration-300 interactive-hover">Planos</a></li>
+            <li><a href="#metodo" class="hover:text-brand-white transition-colors duration-300 interactive-hover">Método</a></li>
+        </ul>
+        <a href="#contato" class="px-5 py-2.5 rounded-full border border-brand-crimson/30 hover:border-brand-crimson bg-brand-crimson/5 hover:bg-brand-crimson text-brand-white text-[10px] font-semibold uppercase tracking-widest transition-all duration-300 interactive-hover">
+            Iniciar Projeto
+        </a>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="relative min-h-screen flex items-center justify-center px-6 pt-32 pb-20 overflow-hidden z-10">
+        <div class="tech-grid"></div>
+        <div class="absolute inset-0 ambient-glow"></div>
+        
+        <div class="max-w-5xl mx-auto w-full text-center relative z-20">
+
+            <!-- Tipografia Monumental de Impacto -->
+            <h1 class="text-4xl sm:text-6xl md:text-8xl font-medium tracking-tight leading-none text-brand-white mb-6 reveal">
+                Transformando ideias em <br class="hidden sm:block">
+                <span class="serif-editorial italic text-brand-crimson font-light">experiências digitais.</span>
+            </h1>
+            
+            <p class="text-xs md:text-sm text-brand-textMuted max-w-lg mx-auto font-light leading-relaxed tracking-wider mb-12 reveal">
+                Design minimalista e engenharia de alto desempenho. Portfólios, e-commerces e sistemas inteligentes de altíssimo padrão arquitetados do zero.
+            </p>
+            
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center reveal">
+                <a href="#contato" class="w-full sm:w-auto px-8 py-3.5 bg-brand-crimson hover:bg-brand-crimsonGlow text-brand-white font-bold text-[10px] uppercase tracking-widest rounded-full transition-all duration-300 interactive-hover shadow-[0_0_20px_rgba(217,26,42,0.15)]">
+                    Iniciar Conversa
+                </a>
+                <a href="#planos" class="w-full sm:w-auto px-8 py-3.5 bg-transparent border border-white/10 hover:border-brand-crimson text-brand-white hover:text-brand-crimson font-bold text-[10px] uppercase tracking-widest rounded-full transition-all duration-300 interactive-hover">
+                    Explorar Planos
+                </a>
+            </div>
+        </div>
+
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50">
+            <span class="text-[8px] uppercase tracking-[0.3em] text-brand-textMuted font-mono">Explore</span>
+            <div class="w-[1px] h-10 bg-gradient-to-b from-brand-crimson to-transparent"></div>
+        </div>
+    </section>
+
+    <!-- MARQUEE INFINITO (Otimizado via CSS puro) -->
+    <div class="relative py-6 border-y border-brand-border bg-brand-blackPure/60 backdrop-blur-md z-20">
+        <div class="flex overflow-hidden select-none" style="mask-image: linear-gradient(to right, transparent, white 15%, white 85%, transparent)">
+            <div class="flex gap-20 whitespace-nowrap animate-[marquee_20s_linear_infinite]">
+                <div class="flex items-center gap-20 text-[10px] font-bold tracking-[0.25em] uppercase text-brand-textMuted">
+                    <span>High Performance Systems</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                    <span>Experiências Imersivas 3D</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                    <span>Design Minimalista Premium</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                    <span>Sistemas sob Medida</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                </div>
+                <div class="flex items-center gap-20 text-[10px] font-bold tracking-[0.25em] uppercase text-brand-textMuted" aria-hidden="true">
+                    <span>High Performance Systems</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                    <span>Experiências Imersivas 3D</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                    <span>Design Minimalista Premium</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                    <span>Sistemas sob Medida</span> <span class="w-1 h-1 rounded-full bg-brand-crimson"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESTILOS DO MARQUEE -->
+    <style>
+        @keyframes marquee {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+    </style>
+
+    <!-- ABOUT SECTION -->
+    <section id="sobre" class="relative py-28 px-6 md:px-12 z-20 bg-brand-blackPure">
+        <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            
+            <!-- Coluna de Conteúdo -->
+            <div>
+                <div class="flex items-center gap-4 mb-5 reveal">
+                    <span class="w-8 h-[1px] bg-brand-crimson"></span>
+                    <span class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson">Boutique de Desenvolvimento</span>
+                </div>
+                <h2 class="text-3xl md:text-5xl font-light tracking-tight leading-tight text-brand-white mb-6 reveal">
+                    A convergência entre a estética editorial e a <span class="serif-editorial italic text-brand-crimson">engenharia de software</span>.
+                </h2>
+                <p class="text-brand-textMuted text-xs md:text-sm font-light leading-relaxed mb-6 reveal">
+                    Na theu.builds, desenhamos e programamos ecossistemas digitais customizados de alto nível. Cada linha de código é estruturada para carregar instantaneamente, e cada layout é planejado para consolidar a autoridade da sua marca.
+                </p>
+                <p class="text-brand-textMuted text-xs md:text-sm font-light leading-relaxed mb-10 reveal">
+                    Sem templates, sem atalhos comuns. Apenas sofisticação, velocidade computacional máxima e interações fluidas integradas.
+                </p>
+                
+                <!-- Estatísticas de Performance -->
+                <div class="grid grid-cols-2 gap-8 pt-8 border-t border-brand-border">
+                    <div class="reveal">
+                        <div class="text-4xl md:text-5xl font-light serif-editorial text-brand-crimson" id="stat-mobile">100%</div>
+                        <div class="text-[9px] uppercase font-mono tracking-widest text-brand-textMuted mt-2">Mobile Responsivo</div>
+                    </div>
+                    <div class="reveal">
+                        <div class="text-4xl md:text-5xl font-light serif-editorial text-brand-crimson" id="stat-speed">99+</div>
+                        <div class="text-[9px] uppercase font-mono tracking-widest text-brand-textMuted mt-2">Performance Lighthouse</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Moldura de Canto de Luxo em Neon (Ref: 4283458784551675272.jpeg) -->
+            <div class="relative aspect-square max-w-sm mx-auto lg:max-w-none w-full reveal">
+                <div class="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-brand-crimson/40"></div>
+                <div class="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-brand-crimson/40"></div>
+                <div class="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-brand-crimson/40"></div>
+                <div class="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-brand-crimson/40"></div>
+                
+                <div class="absolute inset-4 border border-white/5 bg-brand-darkGray/90 flex flex-col justify-between p-8 rounded-2xl">
+                    <div class="text-[8px] font-mono text-brand-crimson tracking-widest uppercase flex justify-between">
+                        <span>TB // DIGITAL EXCELLENCE</span>
+                        <span>LUXURY LAYER</span>
+                    </div>
+                    <div class="my-auto text-center">
+                        <img src="logo.png" alt="TB Logo" class="w-40 h-40 mx-auto object-contain opacity-80 drop-shadow-[0_0_15px_rgba(217,26,42,0.2)]">
+                        <p class="text-[9px] tracking-[0.25em] font-bold text-brand-white uppercase mt-4">Qualidade Imutável</p>
+                        <p class="text-[11px] text-brand-textMuted mt-1 max-w-xs mx-auto leading-relaxed">Experiências refinadas estruturadas para durar sem sofrer de obsolescência tecnológica.</p>
+                    </div>
+                    <div class="h-[1px] w-full bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-brand-crimson w-2/3 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- SERVICES SECTION -->
+    <section id="servicos" class="relative py-28 px-6 md:px-12 z-20 bg-brand-blackPure/95">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="text-center mb-20">
+                <span class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson block mb-3 reveal">Como Atuamos</span>
+                <h2 class="text-3xl md:text-5xl font-light tracking-tight text-brand-white reveal">
+                    Soluções de <span class="serif-editorial italic text-brand-crimson">Elite Digital</span>
+                </h2>
+            </div>
+
+            <!-- Grid de Serviços -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- CARD 1 -->
+                <div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[320px] reveal">
+                    <div>
+                        <div class="flex justify-between items-start mb-8">
+                            <div class="p-3 rounded-xl bg-brand-crimson/5 border border-brand-crimson/20">
+                                <svg class="w-5 h-5 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" stroke-linecap="round"/>
+                                    <path d="M8 21h8M12 17v4" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <span class="font-mono text-[10px] text-brand-textMuted">01 / BRAND</span>
+                        </div>
+                        <h3 class="text-xl font-bold tracking-tight text-brand-white mb-3">Sites & Portfólios</h3>
+                        <p class="text-brand-textMuted text-xs leading-relaxed font-light">Estruturas refinadas com foco total em conversão de alto padrão, velocidade impecável de carregamento e otimização para mecanismos de busca.</p>
+                    </div>
+                    <a href="#planos" class="flex items-center gap-2 text-[9px] tracking-widest font-bold uppercase text-brand-crimson hover:text-brand-white transition-colors duration-300 mt-6 interactive-hover">
+                        Ver planos de investimento <span class="text-xs">→</span>
+                    </a>
+                </div>
+
+                <!-- CARD 2 -->
+                <div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[320px] reveal">
+                    <div>
+                        <div class="flex justify-between items-start mb-8">
+                            <div class="p-3 rounded-xl bg-brand-crimson/5 border border-brand-crimson/20">
+                                <svg class="w-5 h-5 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <span class="font-mono text-[10px] text-brand-textMuted">02 / CORE</span>
+                        </div>
+                        <h3 class="text-xl font-bold tracking-tight text-brand-white mb-3">Sistemas Inteligentes</h3>
+                        <p class="text-brand-textMuted text-xs leading-relaxed font-light">Automação de processos operacionais e dashboards analíticos avançados para marcas corporativas que necessitam de dados e escala constante.</p>
+                    </div>
+                    <a href="#contato" class="flex items-center gap-2 text-[9px] tracking-widest font-bold uppercase text-brand-crimson hover:text-brand-white transition-colors duration-300 mt-6 interactive-hover">
+                        Agendar Consultoria <span class="text-xs">→</span>
+                    </a>
+                </div>
+
+                <!-- CARD 3 -->
+                <div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[320px] reveal">
+                    <div>
+                        <div class="flex justify-between items-start mb-8">
+                            <div class="p-3 rounded-xl bg-brand-crimson/5 border border-brand-crimson/20">
+                                <svg class="w-5 h-5 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <path d="M16.2 7.8l-2 5.6-5.6 2 2-5.6 5.6-2z" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <span class="font-mono text-[10px] text-brand-textMuted">03 / DESIGN</span>
+                        </div>
+                        <h3 class="text-xl font-bold tracking-tight text-brand-white mb-3">Design de Alta Costura</h3>
+                        <p class="text-brand-textMuted text-xs leading-relaxed font-light">Interfaces (UX/UI) desenhadas de forma cirúrgica. Foco total em legibilidade de dados, micro-interações elegantes e harmonia de grids.</p>
+                    </div>
+                    <a href="#contato" class="flex items-center gap-2 text-[9px] tracking-widest font-bold uppercase text-brand-crimson hover:text-brand-white transition-colors duration-300 mt-6 interactive-hover">
+                        Explorar Projetos <span class="text-xs">→</span>
+                    </a>
+                </div>
+
+                <!-- CARD 4 -->
+                <div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[320px] reveal">
+                    <div>
+                        <div class="flex justify-between items-start mb-8">
+                            <div class="p-3 rounded-xl bg-brand-crimson/5 border border-brand-crimson/20">
+                                <svg class="w-5 h-5 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <circle cx="9" cy="21" r="1"/>
+                                    <circle cx="20" cy="21" r="1"/>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <span class="font-mono text-[10px] text-brand-textMuted">04 / COMMERCE</span>
+                        </div>
+                        <h3 class="text-xl font-bold tracking-tight text-brand-white mb-3">Lojas Online</h3>
+                        <p class="text-brand-textMuted text-xs leading-relaxed font-light">E-commerce responsivo de alta conversão integrado com sistemas de pagamento rápido, estoque automatizado e fluxos ágeis.</p>
+                    </div>
+                    <a href="#planos" class="flex items-center gap-2 text-[9px] tracking-widest font-bold uppercase text-brand-crimson hover:text-brand-white transition-colors duration-300 mt-6 interactive-hover">
+                        Ver Opções <span class="text-xs">→</span>
+                    </a>
+                </div>
+
+                <!-- CARD 5 -->
+                <div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[320px] reveal">
+                    <div>
+                        <div class="flex justify-between items-start mb-8">
+                            <div class="p-3 rounded-xl bg-brand-crimson/5 border border-brand-crimson/20">
+                                <svg class="w-5 h-5 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <line x1="18" y1="20" x2="18" y2="10" stroke-linecap="round"/>
+                                    <line x1="12" y1="20" x2="12" y2="4" stroke-linecap="round"/>
+                                    <line x1="6" y1="20" x2="6" y2="14" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <span class="font-mono text-[10px] text-brand-textMuted">05 / SPEED</span>
+                        </div>
+                        <h3 class="text-xl font-bold tracking-tight text-brand-white mb-3">Performance Extrema</h3>
+                        <p class="text-brand-textMuted text-xs leading-relaxed font-light">Otimização estrutural completa de plataformas lentas. Migração de infraestrutura digital para edge servers globais ultra velozes.</p>
+                    </div>
+                    <a href="#contato" class="flex items-center gap-2 text-[9px] tracking-widest font-bold uppercase text-brand-crimson hover:text-brand-white transition-colors duration-300 mt-6 interactive-hover">
+                        Medir Minha Velocidade <span class="text-xs">→</span>
+                    </a>
+                </div>
+
+                <!-- CARD 6 -->
+                <div class="glass-panel p-8 rounded-2xl flex flex-col justify-between min-h-[320px] reveal">
+                    <div>
+                        <div class="flex justify-between items-start mb-8">
+                            <div class="p-3 rounded-xl bg-brand-crimson/5 border border-brand-crimson/20">
+                                <svg class="w-5 h-5 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <span class="font-mono text-[10px] text-brand-textMuted">06 / SYSTEM</span>
+                        </div>
+                        <h3 class="text-xl font-bold tracking-tight text-brand-white mb-3">Suporte & Manutenção</h3>
+                        <p class="text-brand-textMuted text-xs leading-relaxed font-light">Tranquilidade técnica ininterrupta. Backups constantes em servidores redundantes, atualizações regulares e canais ágeis de contato.</p>
+                    </div>
+                    <a href="#contato" class="flex items-center gap-2 text-[9px] tracking-widest font-bold uppercase text-brand-crimson hover:text-brand-white transition-colors duration-300 mt-6 interactive-hover">
+                        Consultar Suporte <span class="text-xs">→</span>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- PROCESS SECTION -->
+    <section class="relative py-28 px-6 md:px-12 z-20 bg-brand-darkGray" id="metodo">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="text-center mb-20">
+                <span class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson block mb-3 reveal">Metodologia</span>
+                <h2 class="text-3xl md:text-5xl font-light tracking-tight text-brand-white reveal">
+                    Processo de <span class="serif-editorial italic text-brand-crimson">Engenharia Rigorosa</span>
+                </h2>
+            </div>
+
+            <!-- Linha de Etapas Conectadas -->
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4 relative pt-6">
+                
+                <!-- Passo 1 -->
+                <div class="text-center reveal">
+                    <div class="w-14 h-14 rounded-full border border-brand-crimson/30 hover:border-brand-crimson flex items-center justify-center mx-auto mb-5 bg-brand-blackPure text-brand-crimson font-light text-lg transition-all duration-300 interactive-hover">01</div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-brand-white mb-2">Kickoff</h3>
+                    <p class="text-[10px] text-brand-textMuted leading-relaxed max-w-[170px] mx-auto">Mapeamento estratégico e identificação da proposta única de valor da sua marca.</p>
+                </div>
+
+                <!-- Passo 2 -->
+                <div class="text-center reveal">
+                    <div class="w-14 h-14 rounded-full border border-brand-crimson/30 hover:border-brand-crimson flex items-center justify-center mx-auto mb-5 bg-brand-blackPure text-brand-crimson font-light text-lg transition-all duration-300 interactive-hover">02</div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-brand-white mb-2">Arquitetura</h3>
+                    <p class="text-[10px] text-brand-textMuted leading-relaxed max-w-[170px] mx-auto">Mapeamento UX inicial de jornadas do usuário e criação estrutural limpa.</p>
+                </div>
+
+                <!-- Passo 3 -->
+                <div class="text-center reveal">
+                    <div class="w-14 h-14 rounded-full border border-brand-crimson/30 hover:border-brand-crimson flex items-center justify-center mx-auto mb-5 bg-brand-blackPure text-brand-crimson font-light text-lg transition-all duration-300 interactive-hover">03</div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-brand-white mb-2">Design Editorial</h3>
+                    <p class="text-[10px] text-brand-textMuted leading-relaxed max-w-[170px] mx-auto">Layouts sob medida focado em refinamento visual, tipografia e espaçamento.</p>
+                </div>
+
+                <!-- Passo 4 -->
+                <div class="text-center reveal">
+                    <div class="w-14 h-14 rounded-full border border-brand-crimson/30 hover:border-brand-crimson flex items-center justify-center mx-auto mb-5 bg-brand-blackPure text-brand-crimson font-light text-lg transition-all duration-300 interactive-hover">04</div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-brand-white mb-2">Engenharia</h3>
+                    <p class="text-[10px] text-brand-textMuted leading-relaxed max-w-[170px] mx-auto">Codificação moderna focada em performance limpa de alto nível de carregamento.</p>
+                </div>
+
+                <!-- Passo 5 -->
+                <div class="text-center reveal">
+                    <div class="w-14 h-14 rounded-full border border-brand-crimson/30 hover:border-brand-crimson flex items-center justify-center mx-auto mb-5 bg-brand-blackPure text-brand-crimson font-light text-lg transition-all duration-300 interactive-hover">05</div>
+                    <h3 class="text-xs font-bold uppercase tracking-widest text-brand-white mb-2">Deploy</h3>
+                    <p class="text-[10px] text-brand-textMuted leading-relaxed max-w-[170px] mx-auto">Verificações de conformidade com os mais altos índices de desempenho do Google.</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section class="relative py-28 px-6 md:px-12 z-20 bg-brand-blackPure" id="planos">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="text-center mb-20">
+                <span class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson block mb-3 reveal">Investimento Transparente</span>
+                <h2 class="text-3xl md:text-5xl font-light tracking-tight text-brand-white reveal">
+                    Planos & <span class="serif-editorial italic text-brand-crimson">Aplicações</span>
+                </h2>
+            </div>
+
+            <!-- Cards de Preços -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+                
+                <!-- Plano 1 -->
+                <div class="glass-panel p-8 rounded-2xl relative flex flex-col justify-between reveal">
+                    <div>
+                        <div class="text-[10px] uppercase tracking-widest font-mono text-brand-textMuted mb-3">Landing Start</div>
+                        <div class="text-4xl font-light serif-editorial text-brand-white mb-2">R$ 197,00</div>
+                        <div class="text-[8px] uppercase tracking-[0.2em] font-mono text-brand-crimson">A partir de</div>
+                        <div class="h-[1px] bg-white/5 my-6"></div>
+                        <ul class="space-y-3.5 text-xs font-light text-brand-textMuted">
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Landing Page de página única</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Design Moderno e Minimalista</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Integração com WhatsApp</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Otimização Mobile</li>
+                        </ul>
+                    </div>
+                    <a href="https://wa.me/5577981336827" target="_blank" class="w-full py-3.5 border border-brand-crimson/20 hover:border-brand-crimson bg-brand-crimson/5 hover:bg-brand-crimson text-brand-white text-[10px] font-bold uppercase tracking-widest rounded-full text-center transition-all duration-300 mt-10 interactive-hover">
+                        Contratar Setup
+                    </a>
+                </div>
+
+                <!-- Plano 2 (Destaque Crimson) -->
+                <div class="glass-panel p-8 rounded-2xl relative flex flex-col justify-between border border-brand-crimson/40 shadow-[0_0_30px_rgba(217,26,42,0.1)] bg-brand-darkGray/90 z-10 reveal">
+                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full border border-brand-crimson bg-brand-crimson text-brand-white text-[8px] tracking-[0.25em] uppercase font-bold">
+                        Mais Demandado
+                    </div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-widest font-mono text-brand-textMuted mt-4 mb-3">Site Business</div>
+                        <div class="text-4xl font-light serif-editorial text-brand-crimson mb-2">R$ 497,00</div>
+                        <div class="text-[8px] uppercase tracking-[0.2em] font-mono text-brand-crimson">A partir de</div>
+                        <div class="h-[1px] bg-white/5 my-6"></div>
+                        <ul class="space-y-3.5 text-xs font-light text-brand-white">
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Site Profissional Multi-páginas</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Design Premium & UX Avançada</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Integração Estratégica WhatsApp</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> SEO Técnico Estruturado</li>
+                        </ul>
+                    </div>
+                    <a href="https://wa.me/5577981336827" target="_blank" class="w-full py-3.5 bg-brand-crimson hover:bg-brand-crimsonGlow text-brand-white text-[10px] font-bold uppercase tracking-widest rounded-full text-center transition-all duration-300 mt-10 interactive-hover">
+                        Iniciar Desenvolvimento
+                    </a>
+                </div>
+
+                <!-- Plano 3 -->
+                <div class="glass-panel p-8 rounded-2xl relative flex flex-col justify-between reveal">
+                    <div>
+                        <div class="text-[10px] uppercase tracking-widest font-mono text-brand-textMuted mb-3">Loja Online</div>
+                        <div class="text-4xl font-light serif-editorial text-brand-white mb-2">R$ 697,00</div>
+                        <div class="text-[8px] uppercase tracking-[0.2em] font-mono text-brand-crimson">A partir de</div>
+                        <div class="h-[1px] bg-white/5 my-6"></div>
+                        <ul class="space-y-3.5 text-xs font-light text-brand-textMuted">
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Loja Online Completa</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Painel Administrativo de Gestão</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Integração WhatsApp p/ Vendas</li>
+                            <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 rounded-full bg-brand-crimson"></span> Experiência Mobile Premium</li>
+                        </ul>
+                    </div>
+                    <a href="https://wa.me/5577981336827" target="_blank" class="w-full py-3.5 border border-brand-crimson/20 hover:border-brand-crimson bg-brand-crimson/5 hover:bg-brand-crimson text-brand-white text-[10px] font-bold uppercase tracking-widest rounded-full text-center transition-all duration-300 mt-10 interactive-hover">
+                        Iniciar E-Commerce
+                    </a>
+                </div>
+
+            </div>
+            
+            <div class="mt-16 text-center reveal">
+                <p class="text-brand-textMuted text-xs mb-8">Sistemas Personalizados (Dashboards, Automações, ERP) — <strong>Sob Consulta</strong>.</p>
+                <a href="https://wa.me/5577981336827" target="_blank" class="inline-block px-8 py-3.5 border border-white/10 hover:border-brand-crimson text-brand-white hover:text-brand-crimson font-bold text-[10px] uppercase tracking-widest rounded-full transition-all duration-300">
+                    Solicitar Consultoria Técnica
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- SISTEMAS PERSONALIZADOS SECTION -->
+    <section class="relative py-28 px-6 md:px-12 z-20 bg-brand-darkGray">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
+                
+                <!-- Coluna Esquerda -->
+                <div>
+                    <span class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson block mb-3 reveal">Engenharia</span>
+                    <h2 class="text-3xl md:text-5xl font-light tracking-tight leading-tight text-brand-white mb-4 reveal">
+                        Sistemas <br><span class="serif-editorial italic text-brand-crimson">Personalizados</span>
+                    </h2>
+                    <div class="h-[1px] bg-white/5 my-6"></div>
+                    <div class="text-2xl md:text-3xl font-bold text-brand-crimson uppercase tracking-tight mb-8 reveal">Sob Consulta</div>
+                    <p class="text-brand-textMuted text-xs md:text-sm font-light leading-relaxed mb-6 reveal">
+                        Desenvolvimento de software exclusivo para resolver desafios específicos da sua operação. Cada sistema possui regras próprias e exige análise técnica individual.
+                    </p>
+                    <p class="text-brand-textMuted text-xs md:text-sm font-light leading-relaxed reveal">
+                        Sistemas personalizados exigem análise técnica individual para garantir o melhor ROI.
+                    </p>
+                </div>
+
+                <!-- Coluna Direita: Grade de Soluções -->
+                <div class="reveal">
+                    <div class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson mb-8">Soluções sob Medida:</div>
+                    <div class="grid grid-cols-2 gap-4">
+                        
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">Dashboards</span>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">Automações</span>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">Gestão Financeira</span>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">ERP</span>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M9 2h6v4H9z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">Controle de Pedidos</span>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">Sistemas Internos</span>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M2 20h20M5 20V10l7-7 7 7v10M9 20v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">Plataformas SaaS</span>
+                        </div>
+
+                        <div class="glass-panel p-5 rounded-xl flex items-center gap-3 hover:border-brand-crimson/30 transition-all duration-300">
+                            <svg class="w-4 h-4 stroke-brand-crimson fill-none flex-shrink-0" viewBox="0 0 24 24" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-brand-white">Gestão de Dados</span>
+                        </div>
+
+                    </div>
+
+                    <p class="text-brand-textMuted text-[11px] italic font-light mt-8 reveal">"O software que se adapta ao seu negócio, e não o contrário."</p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- TRANSPARÊNCIA & MANUTENÇÃO SECTION -->
+    <section class="relative py-28 px-6 md:px-12 z-20 bg-brand-blackPure">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="mb-20">
+                <span class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson block mb-3 reveal">Strategic Value</span>
+                <h2 class="text-3xl md:text-5xl font-light tracking-tight text-brand-white reveal">
+                    Transparência & <span class="serif-editorial italic text-brand-crimson">Manutenção</span>
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                <!-- Investimento -->
+                <div class="reveal">
+                    <div class="flex items-center gap-3 mb-5">
+                        <svg class="w-4 h-4 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-brand-crimson">Investimento</span>
+                    </div>
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed mb-4">
+                        Os valores são <strong class="text-brand-white">"a partir de"</strong>. O orçamento final depende da complexidade, número de páginas e integrações.
+                    </p>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed">
+                        Sistemas personalizados exigem análise técnica individual para garantir o melhor ROI.
+                    </p>
+                </div>
+
+                <!-- Manutenção -->
+                <div class="reveal">
+                    <div class="flex items-center gap-3 mb-5">
+                        <svg class="w-4 h-4 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-brand-crimson">Manutenção</span>
+                    </div>
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <div class="text-3xl font-light serif-editorial text-brand-white mb-2">R$ 30 ~ 40 <span class="text-sm text-brand-textMuted font-mono">/mês</span></div>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed mt-4">
+                        Garante estabilidade, monitoramento 24/7, suporte para pequenas alterações e atualizações de segurança.
+                    </p>
+                </div>
+
+                <!-- Domínio -->
+                <div class="reveal">
+                    <div class="flex items-center gap-3 mb-5">
+                        <svg class="w-4 h-4 stroke-brand-crimson fill-none" viewBox="0 0 24 24" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <span class="text-[10px] font-bold uppercase tracking-widest text-brand-crimson">Domínio</span>
+                    </div>
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <div class="text-3xl font-light serif-editorial text-brand-white mb-2">R$ 50 <span class="text-sm text-brand-textMuted font-mono">/mês</span></div>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed mt-4">
+                        Gerenciamento completo do seu endereço personalizado (ex: sualoja.com.br) para máxima autoridade.
+                    </p>
+                    <p class="text-brand-textMuted text-[10px] italic font-light mt-6 border-t border-white/5 pt-4">
+                        * O domínio é opcional e permanece sempre em nome do cliente.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="relative py-28 px-6 md:px-12 z-20 bg-brand-darkGray">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="mb-20">
+                <span class="text-[9px] uppercase font-mono tracking-widest text-brand-crimson block mb-3 reveal">Suporte</span>
+                <h2 class="text-3xl md:text-5xl font-light tracking-tight text-brand-white reveal">
+                    Perguntas <span class="serif-editorial italic text-brand-crimson">Frequentes</span>
+                </h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
+
+                <!-- FAQ 1 -->
+                <div class="reveal">
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-brand-crimson mb-3">Quanto tempo demora?</h3>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed">
+                        O prazo varia conforme a complexidade do projeto, mas prezamos pela agilidade máxima na entrega sem comprometer a qualidade.
+                    </p>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="reveal">
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-brand-crimson mb-3">O site funciona no celular?</h3>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed">
+                        Sim, todos os nossos projetos são 100% responsivos e otimizados para oferecer a melhor experiência em qualquer dispositivo.
+                    </p>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="reveal">
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-brand-crimson mb-3">Posso editar meus produtos?</h3>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed">
+                        Sim, nos planos com painel administrativo você tem total autonomia para alterar preços, imagens e descrições em tempo real.
+                    </p>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="reveal">
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-brand-crimson mb-3">Preciso pagar domínio?</h3>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed">
+                        O domínio é opcional e fica em seu nome. Oferecemos a gestão completa para garantir que sua marca tenha um endereço profissional.
+                    </p>
+                </div>
+
+                <!-- FAQ 5 -->
+                <div class="reveal">
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-brand-crimson mb-3">Posso adicionar funções futuramente?</h3>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed">
+                        Com certeza. Nossos sistemas são escaláveis, permitindo que novas funcionalidades sejam integradas conforme seu negócio cresce.
+                    </p>
+                </div>
+
+                <!-- FAQ 6 -->
+                <div class="reveal">
+                    <div class="h-[1px] bg-white/5 mb-6"></div>
+                    <h3 class="text-sm font-bold uppercase tracking-wider text-brand-crimson mb-3">Como funciona o suporte?</h3>
+                    <p class="text-brand-textMuted text-xs font-light leading-relaxed">
+                        Oferecemos um canal direto via WhatsApp para suporte técnico, garantindo estabilidade e atualizações constantes para seu projeto.
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA SECTION -->
+    <section class="relative py-36 px-6 md:px-12 z-20 bg-brand-blackPure overflow-hidden" id="contato">
+        <div class="absolute inset-0 bg-brand-blackPure"></div>
+        <div class="absolute inset-0 ambient-glow"></div>
+        <div class="border border-brand-crimson/5 w-[300px] h-[300px] rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+        <div class="border border-brand-crimson/5 w-[600px] h-[600px] rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <h2 class="text-4xl sm:text-6xl md:text-7xl font-light tracking-tight leading-none text-brand-white mb-6 reveal">
+                Vamos arquitetar o <br>
+                <span class="serif-editorial italic text-brand-crimson">extraordinário</span>?
+            </h2>
+            <p class="text-brand-textMuted text-[10px] tracking-widest uppercase font-mono mb-10 reveal">Inicie seu cronograma de desenvolvimento exclusivo hoje.</p>
+            
+            <div class="flex justify-center reveal">
+                <a href="https://wa.me/5577981336827" target="_blank" class="px-8 py-3.5 bg-brand-crimson hover:bg-brand-crimsonGlow text-brand-white font-bold text-[10px] uppercase tracking-widest rounded-full transition-all duration-300 interactive-hover">
+                    Iniciar pelo WhatsApp
+                </a>
+            </div>
+
+            <div class="flex justify-center items-center gap-6 mt-16 text-[9px] font-mono text-brand-textMuted tracking-wider uppercase">
+                <a href="mailto:devtheuz@gmail.com" class="hover:text-brand-crimson transition-colors duration-300 interactive-hover">devtheuz@gmail.com</a>
+                <span class="w-[1px] h-3 bg-brand-crimson/40"></span>
+                <span>Atendimento Global</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="relative py-10 px-6 md:px-12 z-20 bg-brand-blackPure border-t border-brand-border">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            
+            <div class="flex items-center gap-2.5">
+                <img src="logo.png" alt="TB Logo" class="w-6 h-6 object-contain">
+                <div class="flex items-center gap-0.5">
+                    <span class="text-sm font-bold tracking-widest text-brand-white">theu</span>
+                    <span class="text-brand-crimson font-light italic text-base serif-editorial">.builds</span>
+                </div>
+            </div>
+
+            <div class="text-[9px] tracking-[0.2em] font-mono text-brand-textMuted uppercase text-center md:text-left">
+                © 2026 theu.builds. Todos os direitos reservados.
+            </div>
+
+            <div class="text-[9px] tracking-widest font-mono text-brand-crimson uppercase">
+                PERFORMANCE ENGINE: PASSIVE & STABLE
+            </div>
+
+        </div>
+    </footer>
+
+    <script>
+        // ----------------------------------------------------
+        // MOUSE TRACKING OPTIMIZED (Usando translate3d via GPU)
+        // ----------------------------------------------------
+        const cursor = document.getElementById('cursor');
+        const cursorRing = document.getElementById('cursorRing');
+        
+        let mouseX = -100;
+        let mouseY = -100;
+        let currentX = -100;
+        let currentY = -100;
+
+        // Marcado como passive: true para evitar lags em dispositivos touch/scroll
+        window.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+            
+            if (cursor) {
+                cursor.style.transform = `translate3d(${mouseX}px, ${mouseY}px, 0)`;
+            }
+        }, { passive: true });
+
+        // Loop de renderização com atraso do anel externo usando frame rate do navegador
+        let cursorRAF;
+        function renderCursor() {
+            const lerpFactor = 0.12;
+            const dx = mouseX - currentX;
+            const dy = mouseY - currentY;
+            
+            // Pula frames quando o cursor já convergiu (economia de GPU)
+            if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+                currentX += dx * lerpFactor;
+                currentY += dy * lerpFactor;
+                if (cursorRing) {
+                    cursorRing.style.transform = `translate3d(${currentX}px, ${currentY}px, 0)`;
+                }
+            }
+            cursorRAF = requestAnimationFrame(renderCursor);
+        }
+        cursorRAF = requestAnimationFrame(renderCursor);
+
+        // ----------------------------------------------------
+        // ENGINE THREE.JS OTIMIZADA (Com controle de exibição offscreen)
+        // ----------------------------------------------------
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvasElement = document.getElementById('sculpture-3d');
+        
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.1, 50);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvasElement, alpha: true, antialias: false, powerPreference: "high-performance" });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        // Cap de Pixel Ratio de alto desempenho (Máximo de 2 em telas retina altas)
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+
+        // Iluminação Otimizada (Reduzido canais de luz redundantes)
+        const lightAmbient = new THREE.AmbientLight(0x080808);
+        scene.add(lightAmbient);
+
+        const pointKeyLight = new THREE.PointLight(0xffffff, 1.5, 30);
+        pointKeyLight.position.set(4, 4, 4);
+        scene.add(pointKeyLight);
+
+        const pointNeonRim = new THREE.PointLight(0xD91A2A, 10, 15);
+        pointNeonRim.position.set(-4, -4, 2);
+        scene.add(pointNeonRim);
+
+        // Escultura Knot Torus Otimizada com polígonos balanceados
+        const geomSculpture = new THREE.TorusKnotGeometry(1.0, 0.28, 64, 10);
+        const matSculpture = new THREE.MeshPhysicalMaterial({
+            color: 0x111111,
+            roughness: 0.1,
+            metalness: 0.95,
+            transmission: 0.5,
+            thickness: 1.0,
+            clearcoat: 0.8,
+            clearcoatRoughness: 0.1,
+            side: THREE.DoubleSide
+        });
+
+        const meshSculpture = new THREE.Mesh(geomSculpture, matSculpture);
+        scene.add(meshSculpture);
+
+        // Órbita de Partículas
+        const pointsCount = 80; // Reduzido para melhor processamento móvel
+        const geomParticles = new THREE.BufferGeometry();
+        const positionsParticles = new Float32Array(pointsCount * 3);
+
+        for(let i = 0; i < pointsCount; i++) {
+            const angle = (i / pointsCount) * Math.PI * 2;
+            const radius = 2.4 + (Math.random() * 0.5);
+            positionsParticles[i * 3] = Math.cos(angle) * radius;
+            positionsParticles[i * 3 + 1] = Math.sin(angle) * radius + (Math.random() - 0.5) * 0.15;
+            positionsParticles[i * 3 + 2] = (Math.random() - 0.5) * 1.0;
+        }
+
+        geomParticles.setAttribute('position', new THREE.BufferAttribute(positionsParticles, 3));
+        const matParticles = new THREE.PointsMaterial({
+            size: 0.02,
+            color: 0xD91A2A,
+            transparent: true,
+            opacity: 0.5,
+            blending: THREE.AdditiveBlending
+        });
+
+        const pointsParticles = new THREE.Points(geomParticles, matParticles);
+        scene.add(pointsParticles);
+
+        camera.position.z = 6.5;
+
+        // Parallax do Scroll e Mouse
+        let rotTargetX = 0;
+        let rotTargetY = 0;
+        let currentScrollY = 0;
+
+        window.addEventListener('mousemove', (e) => {
+            rotTargetX = (e.clientX / window.innerWidth - 0.5) * 0.8;
+            rotTargetY = -(e.clientY / window.innerHeight - 0.5) * 0.8;
+        }, { passive: true });
+
+        window.addEventListener('scroll', () => {
+            currentScrollY = window.scrollY;
+        }, { passive: true });
+
+        // CONTROLE DE EXIBIÇÃO: Pausa o Three.js se o canvas não estiver visível
+        let isCanvasVisible = true;
+        const canvasObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                isCanvasVisible = entry.isIntersecting;
+            });
+        }, { threshold: 0.05 });
+        canvasObserver.observe(canvasContainer);
+
+        const clock = new THREE.Clock();
+
+        let isTabActive = true;
+        document.addEventListener('visibilitychange', () => {
+            isTabActive = !document.hidden;
+        });
+
+        function renderLoop() {
+            requestAnimationFrame(renderLoop);
+
+            // Não renderiza se estiver fora da tela do usuário ou aba inativa
+            if (!isCanvasVisible || !isTabActive) return;
+
+            const elapsed = clock.getElapsedTime();
+
+            meshSculpture.rotation.y = elapsed * 0.1;
+            meshSculpture.rotation.x = elapsed * 0.05;
+
+            pointsParticles.rotation.z = -elapsed * 0.02;
+
+            meshSculpture.rotation.y += (rotTargetX * 0.4 - meshSculpture.rotation.y) * 0.05;
+            meshSculpture.rotation.x += (rotTargetY * 0.4 - meshSculpture.rotation.x) * 0.05;
+
+            const scrollFactor = currentScrollY * 0.0004;
+            meshSculpture.position.y = -scrollFactor * 1.5;
+            meshSculpture.position.x = scrollFactor * 0.6;
+            camera.position.z = 6.5 + (scrollFactor * 1.0);
+
+            renderer.render(scene, camera);
+        }
+        
+        // Redimensionamento Otimizado com limitador de chamadas
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }, 150);
+        }, { passive: true });
+
+        // ----------------------------------------------------
+        // ANIMAÇÃO DE REVELAÇÃO SUAVE (Com IntersectionObserver)
+        // ----------------------------------------------------
+        function initRevealAnimations() {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            const observerOptions = {
+                root: null,
+                threshold: 0.08,
+                rootMargin: '0px 0px 60px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translate3d(0, 0, 0)';
+                        // Libera will-change e para de observar após revelação
+                        setTimeout(() => {
+                            entry.target.classList.remove('animating');
+                            entry.target.style.willChange = 'auto';
+                        }, 1000);
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            reveals.forEach((el, index) => {
+                // Animações mais ágeis para as informações aparecerem mais rápido
+                const delay = Math.min(index * 0.02, 0.3);
+                el.classList.add('animating');
+                el.style.opacity = '0';
+                el.style.transform = 'translate3d(0, 15px, 0)';
+                el.style.transition = `opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) ${delay}s`;
+                observer.observe(el);
+            });
+        }
+
+        // ----------------------------------------------------
+        // INTEGRAÇÃO DINÂMICA DO WHATSAPP (Sem Impacto no Design)
+        // ----------------------------------------------------
+        function initWhatsAppDynamicLinks() {
+            const cards = document.querySelectorAll('#planos .glass-panel');
+            cards.forEach(card => {
+                const nameEl = card.querySelector('.font-mono');
+                const priceEl = card.querySelector('.serif-editorial');
+                const btn = card.querySelector('a');
+                
+                if (nameEl && priceEl && btn) {
+                    const planName = nameEl.innerText.trim();
+                    const planPrice = priceEl.innerText.trim();
+                    const phoneNumber = '5577981336827';
+                    
+                    let message = '';
+                    if (planName.toLowerCase().includes('landing')) {
+                        message = `Olá! Gostaria de contratar o plano *${planName}* no valor de *${planPrice}*. Como podemos iniciar o setup?`;
+                    } else if (planName.toLowerCase().includes('business') || planName.toLowerCase().includes('site')) {
+                        message = `Olá! Gostaria de iniciar o desenvolvimento do meu *${planName}* a partir de *${planPrice}*. Como funciona o cronograma de entrega?`;
+                    } else if (planName.toLowerCase().includes('loja') || planName.toLowerCase().includes('commerce')) {
+                        message = `Olá! Tenho interesse no plano *${planName}* a partir de *${planPrice}*. Gostaria de tirar algumas dúvidas e iniciar o projeto.`;
+                    } else {
+                        message = `Olá! Gostaria de saber mais sobre o plano *${planName}* com valor a partir de *${planPrice}*.`;
+                    }
+                    
+                    btn.href = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+                }
+            });
+        }
+
+        // Executar inicializações no carregamento da janela
+        window.onload = function() {
+            renderLoop();
+            initRevealAnimations();
+            initWhatsAppDynamicLinks();
+        };
+    </script>
+</body>
+</html>
